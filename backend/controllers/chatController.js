@@ -19,7 +19,8 @@ exports.sendMessage = async (req, res) => {
     });
 
     // generate AI reply
-    const aiReplyText = getAIResponse(message);
+   const aiReplyText = await getAIResponse(message);
+
 
     // save AI message
     const aiMsg = await Chat.create({

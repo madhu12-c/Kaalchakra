@@ -1,24 +1,16 @@
-import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { logout } from "../utils/auth";
 
 export default function Dashboard() {
   const navigate = useNavigate();
 
-  useEffect(() => {
-    if (!localStorage.getItem("token")) {
-      navigate("/login");
-    }
-  }, []);
-
   return (
-    <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center">
-      <h1 className="text-3xl mb-4">Welcome to Kaalchakra 🪐</h1>
+    <div className="min-h-screen flex flex-col items-center justify-center bg-black text-white">
+      <h1 className="text-3xl mb-6">Kaalchakra 🪐</h1>
       <button
-        onClick={() => { logout(); navigate("/login"); }}
-        className="px-6 py-2 bg-red-500 rounded"
+        onClick={() => navigate("/chat")}
+        className="px-6 py-3 rounded-lg bg-gradient-to-r from-blue-500 to-purple-500"
       >
-        Logout
+        Message Ara
       </button>
     </div>
   );
