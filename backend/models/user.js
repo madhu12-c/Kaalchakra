@@ -17,6 +17,11 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+     birthDetails: {
+    dob: String,
+    time: String,
+    place: String,
+  },
   },
   { timestamps: true }
 );

@@ -1,10 +1,12 @@
-const Groq = require("groq-sdk");
+const { GoogleGenAI } = require("@google/genai");
 
-const groq = new Groq({
-  apiKey: process.env.GROQ_API_KEY,
+// Initialize Gemini client
+const ai = new GoogleGenAI({
+  apiKey: process.env.GEMINI_API_KEY,
 });
 
-const SYSTEM_PROMPT = `
+// 🧿 MASTER ASTROLOGY CONTEXT
+const BASE_CONTEXT = `
 You are Ara (आरा), an ancient Vedic astrologer and spiritual guide.
 
 Rules you must follow strictly:
@@ -14,18 +16,18 @@ Rules you must follow strictly:
    - Time of birth (HH:MM with AM/PM)
    - Place of birth (City, Country)
 
-2. Do NOT give detailed astrology predictions without birth details.
-   Only give light guidance until details are provided.
+2. Do NOT give full astrology predictions without birth details.
+   You may only give light guidance until details are provided.
 
 3. After birth details are given:
    - Acknowledge them respectfully
-   - Explain current planetary influence in simple terms
-   - Ask the user to clearly describe their main problem
+   - Explain planetary influences in simple language
+   - Ask the user to explain their main problem
 
 4. After the problem is shared:
-   - Analyze it astrologically (planets, karma, timing)
-   - Do not give exact dates
-   - Do not scare the user
+   - Give astrology-based guidance (planets, karma, timing)
+   - Do NOT give exact dates
+   - Do NOT scare the user
 
 5. Always end with:
    - Practical advice
@@ -39,22 +41,53 @@ Tone:
 - Do not say you are an AI
 `;
 
-const getAIResponse = async (userMessage) => {
+/**
+ * Generate AI response
+ * @param {string} userMessage - message from user
+ * @param {object} birthDetails - optional { dob, time, place }
+ */
+async function getAIResponse(userMessage, birthDetails = null) {
   try {
-    const chatCompletion = await groq.chat.completions.create({
-      model: "llama-3.1-8b-instant",
-      messages: [
-        { role: "system", content: SYSTEM_PROMPT },
-        { role: "user", content: userMessage },
+    // 🧠 Build system context dynamically
+    let systemContext = BASE_CONTEXT;
+
+    if (birthDetails?.dob) {
+      systemContext += `
+Birth Details (already known):
+- Date of Birth: ${birthDetails.dob}
+- Time of Birth: ${birthDetails.time}
+- Place of Birth: ${birthDetails.place}
+
+Do NOT ask for birth details again.
+Use them subtly in your guidance.
+`;
+    }
+
+    const response = await ai.models.generateContent({
+      model: "gemini-3-flash-preview",
+      contents: [
+        {
+          role: "system",
+          parts: [{ text: systemContext }],
+        },
+        {
+          role: "user",
+          parts: [{ text: userMessage }],
+        },
       ],
-      temperature: 0.7,
     });
 
-    return chatCompletion.choices[0].message.content;
+    // ✅ Safe extraction (prevents crashes)
+    const text =
+      response.text ||
+      response.candidates?.[0]?.content?.parts?.[0]?.text;
+
+    return text || "Ara remains silent for a moment. Please ask again.";
+
   } catch (error) {
-    console.error("Groq AI Error:", error.message);
-    return "Ara is silent for a moment. Please ask again shortly 🪐";
+    console.error("🔥 GEMINI AI ERROR:", error.message);
+    return "Ara is silent for a moment. Please try again shortly.";
   }
-};
+}
 
 module.exports = getAIResponse;
