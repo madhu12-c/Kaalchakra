@@ -7,6 +7,9 @@ export default function Register() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [dateOfBirth, setDateOfBirth] = useState("");
+  const [timeOfBirth, setTimeOfBirth] = useState("");
+  const [placeOfBirth, setPlaceOfBirth] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const navigate = useNavigate();
@@ -16,7 +19,11 @@ export default function Register() {
     setError("");
     setSuccess("");
     try {
-      await registerUser(name, email, password);
+      const birthDetails =
+        dateOfBirth || timeOfBirth || placeOfBirth
+          ? { dateOfBirth, timeOfBirth, placeOfBirth }
+          : null;
+      await registerUser(name, email, password, birthDetails);
       setSuccess("Account created! Redirecting...");
       setTimeout(() => navigate("/login"), 1500);
     } catch (err) {
@@ -60,6 +67,29 @@ export default function Register() {
             placeholder="Password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            className="w-full bg-[#0f1424] border border-white/10 rounded-lg px-4 py-3 focus:ring-2 focus:ring-pink-500/40"
+          />
+
+          {/* Optional DOB fields for astrology personalization */}
+          <input
+            type="text"
+            placeholder="Date of Birth (e.g. DD/MM/YYYY)"
+            value={dateOfBirth}
+            onChange={(e) => setDateOfBirth(e.target.value)}
+            className="w-full bg-[#0f1424] border border-white/10 rounded-lg px-4 py-3 focus:ring-2 focus:ring-pink-500/40"
+          />
+          <input
+            type="text"
+            placeholder="Time of Birth (e.g. 10:30 AM)"
+            value={timeOfBirth}
+            onChange={(e) => setTimeOfBirth(e.target.value)}
+            className="w-full bg-[#0f1424] border border-white/10 rounded-lg px-4 py-3 focus:ring-2 focus:ring-pink-500/40"
+          />
+          <input
+            type="text"
+            placeholder="Place of Birth (city)"
+            value={placeOfBirth}
+            onChange={(e) => setPlaceOfBirth(e.target.value)}
             className="w-full bg-[#0f1424] border border-white/10 rounded-lg px-4 py-3 focus:ring-2 focus:ring-pink-500/40"
           />
 

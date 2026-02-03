@@ -5,9 +5,10 @@ const jwt = require("jsonwebtoken");
 // REGISTER
 exports.register = async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    const { name, email, password, dateOfBirth, timeOfBirth, placeOfBirth } =
+      req.body;
 
-    // check all fields
+    // check required fields (DOB fields optional)
     if (!name || !email || !password) {
       return res.status(400).json({ message: "All fields required" });
     }
@@ -21,11 +22,22 @@ exports.register = async (req, res) => {
     // hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
+    // Optional birth details for astrology personalization
+    const birthDetails =
+      dateOfBirth || timeOfBirth || placeOfBirth
+        ? {
+            dob: dateOfBirth || "",
+            time: timeOfBirth || "",
+            place: placeOfBirth || "",
+          }
+        : undefined;
+
     // create user
     const user = await User.create({
       name,
       email,
       password: hashedPassword,
+      ...(birthDetails && { birthDetails }),
     });
 
     res.status(201).json({

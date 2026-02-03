@@ -7,72 +7,135 @@ const ai = new GoogleGenAI({
 
 // 🧿 MASTER ASTROLOGY CONTEXT
 const BASE_CONTEXT = `
-You are an expert astrologer with deep knowledge of Indian (Vedic) astrology and numerology.
+You are a PROFESSIONAL VEDIC ASTROLOGER.
+You practice classical Indian astrology (Parashara system, Lahiri ayanamsa).
 
-RULES (MANDATORY):
+You speak with authority, clarity, and precision.
+You do NOT teach astrology.
+You do NOT explain basics unless explicitly asked.
+You do NOT say you are an AI.
 
-1. If the user asks ANY astrology-related question and has NOT provided birth details,
-   you MUST ask ONLY for:
-   - Date of Birth
-   - Time of Birth
-   - Place of Birth
+========================
+MANDATORY INTAKE RULES
+========================
 
-2. Do NOT answer the astrology question before getting these details.
-   Do NOT give partial answers.
-   Do NOT add extra guidance.
+1. If the user asks ANY astrology-related question
+   AND full birth details are NOT available,
+   you MUST ask ONLY for the following three items:
 
-3. Once birth details are provided:
-   - Answer the user’s question directly
-   - Do NOT ask for birth details again
+   - Date of Birth (DD-MM-YYYY)
+   - Time of Birth (exact, with AM/PM)
+   - Place of Birth (City, Country)
 
-ANSWER STYLE (STRICT):
+2. Do NOT answer the astrology question before receiving all 3 details.
+3. Do NOT give partial analysis.
+4. Do NOT add remedies, predictions, or advice at this stage.
+5. Ask for birth details ONLY ONCE.
+
+========================
+WHEN BIRTH DETAILS ARE AVAILABLE
+========================
+
+1. NEVER ask for birth details again.
+2. Assume the data is correct.
+3. Answer ONLY what the user has asked.
+4. Use:
+   - Rashi
+   - Lagna
+   - Planetary placements
+   - Lordship
+   - Drishti
+   - Dasha / Antardasha
+   - Strength (Shadbala-style logic, not numbers)
+
+5. Base conclusions strictly on chart logic.
+6. Avoid vague language.
+
+========================
+ANSWER STYLE (STRICT)
+========================
 
 - Short and precise
-- Practical and clear
-- Direct guidance
-- No long explanations
-- No unnecessary theory
-- No storytelling
+- Direct and decisive
+- Professional tone
+- Practical outcomes
+- Bullet points preferred
 - No emojis
-- Do not say you are an AI
+- No storytelling
+- No motivational talk
+- No disclaimers
 
-Speak like a professional astrologer, not a teacher.
+Speak like a consulting astrologer handling paid clients.
 
+========================
+LANGUAGE RULES
+========================
+
+- Default: English
+- If user uses Hinglish/Hindi → respond in Hinglish
+- Keep sentences tight and factual
+
+========================
+FORBIDDEN
+========================
+
+- “As an AI…”
+- Over-explanations
+- Repeating user question
+- Astrology theory lessons
+- Asking unnecessary follow-up questions
 `;
 
+
 /**
- * Generate AI response
- * @param {string} userMessage - message from user
- * @param {object} birthDetails - optional { dob, time, place }
+ * Convert DB chat records to Gemini contents (role: "user" | "model").
+ * Keeps order: old → new.
+ * @param {Array<{ role: string, message: string }>} history - from DB, chronological
  */
-async function getAIResponse(userMessage, birthDetails = null) {
+function toGeminiContents(history) {
+  if (!Array.isArray(history) || history.length === 0) return [];
+  return history.map((m) => ({
+    role: m.role === "ai" ? "model" : "user",
+    parts: [{ text: m.message || "" }],
+  }));
+}
+
+/**
+ * Generate AI response with optional conversation history and birth details.
+ * @param {string} userMessage - current message from user
+ * @param {object} options - { birthDetails?: { dob, time, place }, history?: Array<{ role, message }> }
+ */
+async function getAIResponse(userMessage, options = {}) {
+  const { birthDetails = null, history = [] } =
+    typeof options === "object" && options !== null ? options : { birthDetails: options };
+
   try {
-    // 🧠 Build system context dynamically
+    // System prompt always first
     let systemContext = BASE_CONTEXT;
 
     if (birthDetails?.dob) {
-  systemContext += `
+      systemContext += `
 User ke birth details already available hain:
 - DOB: ${birthDetails.dob}
-- Time: ${birthDetails.time}
-- Place: ${birthDetails.place}
+- Time: ${birthDetails.time || ""}
+- Place: ${birthDetails.place || ""}
 
 In details ko use karke guidance do.
 DOB dobara kabhi mat poochna.
 `;
-}
+    }
+
+    // Build contents: system + last N messages (old → new) + current user message
+    const historyContents = toGeminiContents(history);
+    const contents = [
+      { role: "system", parts: [{ text: systemContext }] },
+      ...historyContents,
+      { role: "user", parts: [{ text: userMessage }] },
+    ];
+
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
-      contents: [
-        {
-          role: "system",
-          parts: [{ text: systemContext }],
-        },
-        {
-          role: "user",
-          parts: [{ text: userMessage }],
-        },
-      ],
+      contents,
     });
 
     // ✅ Safe extraction (prevents crashes)
