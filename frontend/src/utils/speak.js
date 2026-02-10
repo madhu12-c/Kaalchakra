@@ -1,6 +1,7 @@
 export function speak(text) {
-  if (!("speechSynthesis" in window)) return;
+  if (!("speechSynthesis" in window)) return null;
 
+  // Cancel any existing speech
   window.speechSynthesis.cancel();
 
   const utterance = new SpeechSynthesisUtterance(text);
@@ -10,4 +11,6 @@ export function speak(text) {
   utterance.volume = 1;
 
   window.speechSynthesis.speak(utterance);
+
+  return utterance;
 }

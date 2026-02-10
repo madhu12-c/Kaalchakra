@@ -4,6 +4,10 @@ import ChatLayout from "../components/chat/ChatLayout";
 const Chat = () => {
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [responseMode, setResponseMode] = useState(() => {
+    return localStorage.getItem("responseMode") || "text";
+  });
+  const [autoStartListening, setAutoStartListening] = useState(false);
 
   const token = localStorage.getItem("token");
 
@@ -29,6 +33,18 @@ const Chat = () => {
         );
       } catch {
         setMessages([]);
+      }
+
+      // Show welcome message once per session and optionally trigger auto-listen
+      const welcomeShown = sessionStorage.getItem("welcomeShown");
+      if (!welcomeShown) {
+        const welcome = "Welcome. You can ask your question now.";
+        setMessages((prev) => [...prev, { role: "ai", content: welcome }]);
+        sessionStorage.setItem("welcomeShown", "true");
+        if ((localStorage.getItem("responseMode") || responseMode) === "voice") {
+          // inform ChatLayout/ChatInput to start listening
+          setAutoStartListening(true);
+        }
       }
     };
 
@@ -81,6 +97,12 @@ const Chat = () => {
       messages={messages}
       isLoading={loading}
       onSend={sendMessage}
+      responseMode={responseMode}
+      onResponseModeChange={(mode) => {
+        setResponseMode(mode);
+        localStorage.setItem("responseMode", mode);
+      }}
+      autoStartListening={autoStartListening}
     />
   );
 };

@@ -31,18 +31,32 @@ export default function Dashboard() {
           Ancient astrology, modern intelligence
         </p>
 
-        {/* button */}
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={() => navigate("/chat")}
-          className="mt-4 px-8 py-3 rounded-full
-                     bg-gradient-to-r from-indigo-500 to-purple-600
-                     shadow-lg shadow-purple-600/30
-                     font-medium"
-        >
-          Message Ara
-        </motion.button>
+        {/* mode selection buttons */}
+        <div className="flex gap-4 mt-4">
+          <motion.button
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={() => {
+              localStorage.setItem("responseMode", "text");
+              navigate("/chat");
+            }}
+            className="px-6 py-3 rounded-full bg-slate-800 hover:bg-slate-700 font-medium"
+          >
+            Text Chat
+          </motion.button>
+
+          <motion.button
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={() => {
+              localStorage.setItem("responseMode", "voice");
+              navigate("/chat");
+            }}
+            className="px-6 py-3 rounded-full bg-indigo-600 hover:bg-indigo-500 font-medium"
+          >
+            Voice Chat
+          </motion.button>
+        </div>
       </motion.div>
     </div>
   );

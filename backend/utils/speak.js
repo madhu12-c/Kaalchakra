@@ -11,3 +11,4 @@ export function speak(text) {
 
   window.speechSynthesis.speak(utterance);
 }
+    
